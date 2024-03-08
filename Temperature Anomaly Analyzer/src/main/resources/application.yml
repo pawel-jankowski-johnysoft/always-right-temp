@@ -1,0 +1,14 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      auto-offset-reset: earliest
+    streams:
+      application-id: temperature-measurements
+#      different value generates strange behaviour - stream terminal operation
+      state-store-cache-max-size: 0
+#      remainder
+#      state-dir: in-memory
+anomaly:
+  last_recent_measurements: ${ANOMALY_LAST_RECENT_MEASUREMENTS:10}
+  anomaly_threshold: ${ANOMALY_THRESHOLD:5}
