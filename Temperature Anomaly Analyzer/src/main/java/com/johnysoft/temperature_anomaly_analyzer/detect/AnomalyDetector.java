@@ -38,11 +38,11 @@ class AnomalyDetector {
     }
 
     private OptionalDouble getPotentialAverageTemperature() {
-        return measurements.stream().mapToDouble(TemperatureMeasurement::temperature).average();
+        return measurements.stream().mapToDouble(TemperatureMeasurement::getTemperature).average();
     }
 
     private void checkAnomaly(double averageTemperature, TemperatureMeasurement measurement) {
-        anomaly = Math.abs(averageTemperature - measurement.temperature()) > anomalyThreshold ? measurement : null;
+        anomaly = Math.abs(averageTemperature - measurement.getTemperature()) > anomalyThreshold ? measurement : null;
     }
 
     private void addToMeasurements(TemperatureMeasurement measurement) {

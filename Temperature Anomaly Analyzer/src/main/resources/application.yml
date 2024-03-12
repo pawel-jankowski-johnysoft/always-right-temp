@@ -7,6 +7,11 @@ spring:
       application-id: temperature-measurements
 #      different value generates strange behaviour - stream terminal operation
       state-store-cache-max-size: 0
+    producer:
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        schema.reflection: true
 #      remainder
 #      state-dir: in-memory
 anomaly:

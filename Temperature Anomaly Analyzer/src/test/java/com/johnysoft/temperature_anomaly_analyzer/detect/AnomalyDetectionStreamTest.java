@@ -1,5 +1,6 @@
 package com.johnysoft.temperature_anomaly_analyzer.detect;
 
+import com.johnysoft.temperature_anomaly_analyzer.kafka.SerdesFactories;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.streams.*;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -28,7 +29,7 @@ class AnomalyDetectionStreamTest {
     @BeforeEach
     public void init() {
         StreamsBuilder streamsBuilder = new StreamsBuilder();
-        Topology topology = CONFIGURATION.detectAnomalyTopology(streamsBuilder, LAST_RECENT_MEASUREMENTS, ANOMALY_THRESHOLD);
+        Topology topology = CONFIGURATION.detectAnomalyTopology(streamsBuilder, SerdesFactories.fromJSONSerdes(TemperatureMeasurement.class),  LAST_RECENT_MEASUREMENTS, ANOMALY_THRESHOLD);
 
         topologyTestDriver = new TopologyTestDriver(topology, new Properties());
         this.inputTopic = topologyTestDriver.createInputTopic(TEMPERATURE_MEASUREMENTS, new LongSerializer(), new JsonSerializer<>());
@@ -48,7 +49,7 @@ class AnomalyDetectionStreamTest {
     @Test
     void noAnomaliesForSingleMeasurement() {
             // when
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 30.0f, new Date()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 30.0f, Instant.now().toEpochMilli()));
 
             //then
             Assertions.assertTrue(outputTopic.isEmpty());
@@ -57,11 +58,11 @@ class AnomalyDetectionStreamTest {
     @Test
     void noAnomaliesDetectedUntilTheThresholdHasBeenExceeded() {
             // when
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 30.0f, new Date()));
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 32.0f, new Date()));
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 34.0f, new Date()));
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 36.0f, new Date()));
-            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 38.0f, new Date()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 30.0f, Instant.now().toEpochMilli()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 32.0f, Instant.now().toEpochMilli()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 34.0f, Instant.now().toEpochMilli()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 36.0f, Instant.now().toEpochMilli()));
+            inputTopic.pipeInput(1L, new TemperatureMeasurement(1L, 1L, 38.0f, Instant.now().toEpochMilli()));
 
             //then
             Assertions.assertTrue(outputTopic.isEmpty());
@@ -71,12 +72,12 @@ class AnomalyDetectionStreamTest {
     @Test
     void emitAnomalyWhenHasBeenDetected() {
         // given
-        TemperatureMeasurement initialMeasurement = new TemperatureMeasurement(1L, 1L, 30.0f, new Date());
-        TemperatureMeasurement anomaly = initialMeasurement.withTemperature(initialMeasurement.temperature() - (ANOMALY_THRESHOLD + 0.1f));
+        TemperatureMeasurement initialMeasurement = new TemperatureMeasurement(1L, 1L, 30.0f, Instant.now().toEpochMilli());
+        TemperatureMeasurement anomaly = initialMeasurement.withTemperature(initialMeasurement.getTemperature() - (ANOMALY_THRESHOLD + 0.1f));
 
         // when
-        inputTopic.pipeInput(initialMeasurement.thermometerId(), initialMeasurement);
-        inputTopic.pipeInput(anomaly.thermometerId(), anomaly);
+        inputTopic.pipeInput(initialMeasurement.getThermometerId(), initialMeasurement);
+        inputTopic.pipeInput(anomaly.getThermometerId(), anomaly);
 
         //then
         Assertions.assertEquals(outputTopic.readValue(), anomaly);
@@ -85,8 +86,8 @@ class AnomalyDetectionStreamTest {
     @Test
     void onlyOneValidAnomalyDetectedInGivenMeasurements() {
         // given
-        TemperatureMeasurement initialMeasurement = new TemperatureMeasurement(1L, 1L, 30.0f, new Date());
-        float anomalyTempearture = initialMeasurement.temperature() - (ANOMALY_THRESHOLD + 0.1f);
+        TemperatureMeasurement initialMeasurement = new TemperatureMeasurement(1L, 1L, 30.0f, Instant.now().toEpochMilli());
+        float anomalyTempearture = initialMeasurement.getTemperature() - (ANOMALY_THRESHOLD + 0.1f);
 
         //and
         TemperatureMeasurement anomaly = initialMeasurement.withTemperature(anomalyTempearture);
@@ -94,9 +95,9 @@ class AnomalyDetectionStreamTest {
         TemperatureMeasurement nonAnomalyMeasurement = initialMeasurement.withTemperature(anomalyTempearture + ((float) ANOMALY_THRESHOLD / 2));
 
         // when
-        inputTopic.pipeInput(initialMeasurement.thermometerId(), initialMeasurement);
-        inputTopic.pipeInput(anomaly.thermometerId(), anomaly);
-        inputTopic.pipeInput(initialMeasurement.thermometerId(), nonAnomalyMeasurement);
+        inputTopic.pipeInput(initialMeasurement.getThermometerId(), initialMeasurement);
+        inputTopic.pipeInput(anomaly.getThermometerId(), anomaly);
+        inputTopic.pipeInput(initialMeasurement.getThermometerId(), nonAnomalyMeasurement);
 
         //then
         Assertions.assertEquals(outputNonNullMeasurements(), 1);

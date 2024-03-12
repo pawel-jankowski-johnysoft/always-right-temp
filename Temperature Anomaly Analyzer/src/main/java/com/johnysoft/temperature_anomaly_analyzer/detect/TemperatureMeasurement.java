@@ -1,9 +1,16 @@
 package com.johnysoft.temperature_anomaly_analyzer.detect;
 
-import lombok.With;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
-
-@With
-record TemperatureMeasurement(long roomId, long thermometerId, float temperature, Date timestamp) {
+// Avro Serializer had a problem with serializing record
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Data
+class TemperatureMeasurement {
+    long roomId;
+    long thermometerId;
+    @With float temperature;
+    long timestamp;
 }
