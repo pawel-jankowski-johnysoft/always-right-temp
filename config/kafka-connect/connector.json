@@ -1,0 +1,26 @@
+{
+  "name": "JdbcSinkConnector-anomaly-detected",
+  "config": {
+    "name": "JdbcSinkConnector-anomaly-detected",
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": 1,
+    "key.converter": "org.apache.kafka.connect.converters.LongConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "http://schema-registry:8081",
+    "key.converter.schemas.enable": true,
+    "value.converter.schemas.enable": true,
+    "errors.tolerance": "all",
+    "errors.log.enable": true,
+    "errors.log.include.messages": true,
+    "topics": "anomaly-detected",
+    "connection.url": "jdbc:mysql://mysql:3306/anomalies?useSSL=false&allowPublicKeyRetrieval=true",
+    "connection.user": "root",
+    "connection.password": "root",
+    "insert.mode": "INSERT",
+    "table.name.format": "anomalies",
+    "pk.mode": "record_value",
+    "dialect.name": "MySqlDatabaseDialect",
+    "auto.create": true,
+    "auto.evolve": true
+  }
+}
