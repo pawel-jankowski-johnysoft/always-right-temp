@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+    id("com.bakdata.avro") version "1.4.0"
+}
+
+group = 'com.johnysoft'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+}
+
+dependencies {
+    api 'io.confluent:kafka-streams-avro-serde:7.6.0'
+    compileOnly group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.7.0'
+    compileOnly 'org.springframework.kafka:spring-kafka:3.1.2'
+}
