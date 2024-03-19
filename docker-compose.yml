@@ -1,17 +1,106 @@
 version: '3'
+
 services:
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
+
   kafka:
     image: wurstmeister/kafka
     ports:
       - "9092:9092"
+    depends_on:
+      - zookeeper
     environment:
-#      add 127.0.0.1 kafka to /etc/hosts in order to allows spring boot app works
+      KAFKA_BROKER_ID: 1
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+#
+#  kafka2:
+#    image: wurstmeister/kafka
+#    ports:
+#      - "9094:9094"
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 2
+#      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka2:9093,OUTSIDE://kafka2:9094
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+#      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9094
+#      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#  kafka3:
+#    image: wurstmeister/kafka
+#    ports:
+#      - "9095:9095"
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 3
+#      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka3:9093,OUTSIDE://kafka3:9095
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+#      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9095
+#      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - kafka
+#      - kafka2
+#      - kafka3
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+#      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092,kafka2:9094'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+#      CONNECT_BOOTSTRAP_SERVERS: "kafka:9092, kafka2:9094"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: kafka-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.converters.LongConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.converters.LongConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_PLUGIN_PATH: "/usr/share/java"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    depends_on:
+      - kafka
+    volumes:
+      - ./config/connectors:/tmp/connectors
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testowa
+    volumes:
+      - ./config/mysql-init:/docker-entrypoint-initdb.d
