@@ -112,3 +112,10 @@ services:
       - schema-registry
     environment:
       schema.registry.url: http://schema-registry:8081
+  temperature-anomaly-analyzer:
+    image: temperature_anomaly_analyzer
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      spring.kafka.properties.schema.registry.url: http://schema-registry:8081
