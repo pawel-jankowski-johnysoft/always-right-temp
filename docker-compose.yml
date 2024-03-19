@@ -104,3 +104,11 @@ services:
       MYSQL_DATABASE: testowa
     volumes:
       - ./config/mysql-init:/docker-entrypoint-initdb.d
+
+  temperature-measurement-generator:
+    image: temperature_measurement_generator
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      schema.registry.url: http://schema-registry:8081
