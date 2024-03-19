@@ -15,6 +15,6 @@ repositories {
 
 dependencies {
     api 'io.confluent:kafka-streams-avro-serde:7.6.0'
-    compileOnly group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.7.0'
+    compileOnly 'org.apache.kafka:kafka_2.13:3.7.0'
     compileOnly 'org.springframework.kafka:spring-kafka:3.1.2'
 }
