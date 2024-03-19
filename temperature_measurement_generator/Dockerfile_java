@@ -1,0 +1,4 @@
+FROM eclipse-temurin:21.0.1_12-jre
+WORKDIR /app
+COPY build/libs/temperature_measurement_generator-all.jar app.jar
+ENTRYPOINT ["java","-cp", "/app/app.jar", "com.johnysoft.measurement_generator.Main"]
