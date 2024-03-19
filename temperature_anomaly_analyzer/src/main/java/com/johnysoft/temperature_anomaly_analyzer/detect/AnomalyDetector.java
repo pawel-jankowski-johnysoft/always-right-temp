@@ -18,19 +18,19 @@ class AnomalyDetector {
 
     private int anomalyThreshold;
 
-    private List<TemperatureMeasurement> measurements = new ArrayList<>();
+    private final List<InternalTemperatureMeasurement> measurements = new ArrayList<>();
 
     private int currentMeasurement = 0;
 
-    private TemperatureMeasurement anomaly;
+    private InternalTemperatureMeasurement anomaly;
 
 
-    private AnomalyDetector(int lastRecentMeasurements, int anomalyThreshold){
+    private AnomalyDetector(int lastRecentMeasurements, int anomalyThreshold) {
         this.anomalyThreshold = anomalyThreshold;
         this.lastRecentMeasurements = lastRecentMeasurements;
     }
 
-    public AnomalyDetector process(TemperatureMeasurement measurement) {
+    public AnomalyDetector process(InternalTemperatureMeasurement measurement) {
         getPotentialAverageTemperature()
                 .ifPresent(averageTemperature -> checkAnomaly(averageTemperature, measurement));
         addToMeasurements(measurement);
@@ -38,16 +38,17 @@ class AnomalyDetector {
     }
 
     private OptionalDouble getPotentialAverageTemperature() {
-        return measurements.stream().mapToDouble(TemperatureMeasurement::temperature).average();
+        return measurements.stream().mapToDouble(InternalTemperatureMeasurement::getTemperature).average();
     }
 
-    private void checkAnomaly(double averageTemperature, TemperatureMeasurement measurement) {
-        anomaly = Math.abs(averageTemperature - measurement.temperature()) > anomalyThreshold ? measurement : null;
+
+    private void checkAnomaly(double averageTemperature, InternalTemperatureMeasurement measurement) {
+        anomaly = Math.abs(averageTemperature - measurement.getTemperature()) > anomalyThreshold ? measurement : null;
     }
 
-    private void addToMeasurements(TemperatureMeasurement measurement) {
+    private void addToMeasurements(InternalTemperatureMeasurement measurement) {
         measurements.add(currentMeasurement, measurement);
-        currentMeasurement = (currentMeasurement+1) % lastRecentMeasurements;
+        currentMeasurement = (currentMeasurement + 1) % lastRecentMeasurements;
     }
 
     public boolean anomalyDetected() {
