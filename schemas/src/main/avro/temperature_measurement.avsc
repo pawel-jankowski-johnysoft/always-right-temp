@@ -1,0 +1,11 @@
+{
+    "type":"record",
+    "name": "TemperatureMeasurement",
+    "namespace": "com.johnysoft.measurement_generator",
+    "fields": [
+        {"type": "long", "name": "roomId"},
+        {"type": "float", "name": "temperature"},
+        {"type": "long", "name": "thermometerId"},
+        {"type": "long", "name": "timestamp"}
+    ]
+}
