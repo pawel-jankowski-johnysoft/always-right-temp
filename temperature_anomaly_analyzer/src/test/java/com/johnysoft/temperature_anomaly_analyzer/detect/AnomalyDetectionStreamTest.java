@@ -13,7 +13,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Properties;
 
-import static com.johnysoft.temperature_anomaly_analyzer.detect.AnomalyDetectionConfiguration.ANOMALY_DETECTED;
+import static com.johnysoft.temperature_anomaly_analyzer.detect.AnomalyDetectionConfiguration.DETECTED_ANOMALIES;
 import static com.johnysoft.temperature_anomaly_analyzer.detect.AnomalyDetectionConfiguration.TEMPERATURE_MEASUREMENTS;
 
 @Disabled("""
@@ -39,7 +39,7 @@ class AnomalyDetectionStreamTest {
 
         JsonDeserializer<TemperatureMeasurement> valueDeserializer = new JsonDeserializer<>();
         valueDeserializer.addTrustedPackages("*");
-        this.outputTopic = topologyTestDriver.createOutputTopic(ANOMALY_DETECTED, new LongDeserializer(), valueDeserializer);
+        this.outputTopic = topologyTestDriver.createOutputTopic(DETECTED_ANOMALIES, new LongDeserializer(), valueDeserializer);
 
     }
 

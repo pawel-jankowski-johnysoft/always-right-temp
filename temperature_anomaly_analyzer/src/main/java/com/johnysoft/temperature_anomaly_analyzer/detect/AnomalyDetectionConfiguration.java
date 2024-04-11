@@ -22,7 +22,7 @@ import java.util.Collections;
 @Configuration
 class AnomalyDetectionConfiguration {
     static final String TEMPERATURE_MEASUREMENTS = "temperature-measurements";
-    static final String ANOMALY_DETECTED = "anomaly-detected";
+    static final String DETECTED_ANOMALIES = "detected-anomalies";
 
     @Bean
     NewTopic TEMPERATURE_MEASUREMENTS() {
@@ -49,7 +49,7 @@ class AnomalyDetectionConfiguration {
                 .filter((key, value) -> value.anomalyDetected())
                 .mapValues((unused, value) -> value.getAnomaly().toTemperatureMeasurement())
                 .toStream()
-                .to(ANOMALY_DETECTED, Produced.with(Serdes.Long(), anomalyDetectedValueSerde));
+                .to(DETECTED_ANOMALIES, Produced.with(Serdes.Long(), anomalyDetectedValueSerde));
 
         return streamsBuilder.build();
     }

@@ -1,7 +1,7 @@
 {
-  "name": "JdbcSinkConnector-anomaly-detected",
+  "name": "JdbcSinkConnector-detected-anomalies",
   "config": {
-    "name": "JdbcSinkConnector-anomaly-detected",
+    "name": "JdbcSinkConnector-detected-anomalies",
     "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
     "tasks.max": 1,
     "key.converter": "org.apache.kafka.connect.converters.LongConverter",
@@ -12,7 +12,7 @@
     "errors.tolerance": "all",
     "errors.log.enable": true,
     "errors.log.include.messages": true,
-    "topics": "anomaly-detected",
+    "topics": "detected-anomalies",
     "connection.url": "jdbc:mysql://mysql:3306/anomalies?useSSL=false&allowPublicKeyRetrieval=true",
     "connection.user": "root",
     "connection.password": "root",
