@@ -8,7 +8,7 @@ group = 'com.johnysoft'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = '21'
 }
 
 configurations {
@@ -19,21 +19,15 @@ configurations {
 
 repositories {
     mavenCentral()
-    maven {
-        url "https://packages.confluent.io/maven/"
-    }
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'org.apache.kafka:kafka-streams'
-    implementation 'org.springframework.kafka:spring-kafka'
-    implementation project(":schemas")
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'io.projectreactor:reactor-test'
 }
 
 tasks.named('test') {
