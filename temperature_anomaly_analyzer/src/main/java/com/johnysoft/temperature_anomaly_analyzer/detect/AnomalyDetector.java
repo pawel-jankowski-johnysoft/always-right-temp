@@ -1,61 +1,37 @@
 package com.johnysoft.temperature_anomaly_analyzer.detect;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.OptionalDouble;
+import java.util.Collection;
 
 import static lombok.AccessLevel.PACKAGE;
 
 /*Getter is needed to store aggregate state */
-@Getter
+@Data
 @NoArgsConstructor(access = PACKAGE)
 class AnomalyDetector {
-
-    private int lastRecentMeasurements;
-
+    private MeasurementsStorage storage;
     private int anomalyThreshold;
+    private Collection<InternalTemperatureMeasurement> anomalies;
 
-    private final List<InternalTemperatureMeasurement> measurements = new ArrayList<>();
-
-    private int currentMeasurement = 0;
-
-    private InternalTemperatureMeasurement anomaly;
-
-
-    private AnomalyDetector(int lastRecentMeasurements, int anomalyThreshold) {
+    private AnomalyDetector(MeasurementsStorage storage, int anomalyThreshold) {
+        this.storage = storage;
         this.anomalyThreshold = anomalyThreshold;
-        this.lastRecentMeasurements = lastRecentMeasurements;
     }
 
     public AnomalyDetector process(InternalTemperatureMeasurement measurement) {
-        getPotentialAverageTemperature()
-                .ifPresent(averageTemperature -> checkAnomaly(averageTemperature, measurement));
-        addToMeasurements(measurement);
+        storage.add(measurement);
+        this.anomalies = AnomaliesFinder.find(storage.getMeasurementsView(), anomalyThreshold);
         return this;
     }
 
-    private OptionalDouble getPotentialAverageTemperature() {
-        return measurements.stream().mapToDouble(InternalTemperatureMeasurement::getTemperature).average();
+    public boolean anomaliesDetected() {
+        return !anomalies.isEmpty();
     }
 
-
-    private void checkAnomaly(double averageTemperature, InternalTemperatureMeasurement measurement) {
-        anomaly = Math.abs(averageTemperature - measurement.getTemperature()) > anomalyThreshold ? measurement : null;
-    }
-
-    private void addToMeasurements(InternalTemperatureMeasurement measurement) {
-        measurements.add(currentMeasurement, measurement);
-        currentMeasurement = (currentMeasurement + 1) % lastRecentMeasurements;
-    }
-
-    public boolean anomalyDetected() {
-        return this.anomaly != null;
-    }
-
-    static AnomalyDetector forMeasurementsWithThreshold(int lastRecentMeasurements, int anomalyThreshold) {
-        return new AnomalyDetector(lastRecentMeasurements, anomalyThreshold);
+    static AnomalyDetector create(int lastRecentMeasurements, int anomalyThreshold) {
+        MeasurementsStorage storage = new MeasurementsStorage(lastRecentMeasurements);
+        return new AnomalyDetector(storage, anomalyThreshold);
     }
 }

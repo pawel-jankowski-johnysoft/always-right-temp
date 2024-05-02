@@ -28,7 +28,7 @@ class AnomalyDetectionConfiguration {
     NewTopic TEMPERATURE_MEASUREMENTS() {
         return TopicBuilder.name(TEMPERATURE_MEASUREMENTS)
                 .replicas(1)
-                .partitions(1)
+                .partitions(3)
                 .build();
     }
 
@@ -45,12 +45,13 @@ class AnomalyDetectionConfiguration {
         var stream = streamsBuilder.stream(TEMPERATURE_MEASUREMENTS, Consumed.with(Serdes.Long(), anomalyDetectedValueSerde));
         stream.mapValues(InternalTemperatureMeasurement::from)
                 .groupByKey()
-                .aggregate(() -> AnomalyDetector.forMeasurementsWithThreshold(lastRecentMeasurements, anomalyThreshold), (key, value, aggregate) -> aggregate.process(value), Materialized.with(Serdes.Long(), SerdesFactories.fromJSONSerdes(AnomalyDetector.class)))
-                .filter((key, value) -> value.anomalyDetected())
-                .mapValues((unused, value) -> value.getAnomaly().toTemperatureMeasurement())
+                .aggregate(() -> AnomalyDetector.create(lastRecentMeasurements, anomalyThreshold), (key, value, aggregate) -> aggregate.process(value), Materialized.with(Serdes.Long(), SerdesFactories.fromJSONSerdes(AnomalyDetector.class)))
+                .filter((key, value) -> value.anomaliesDetected())
+                .mapValues((unused, value) -> value.getAnomalies())
                 .toStream()
+                .flatMapValues(value -> value.stream().map(InternalTemperatureMeasurement::toTemperatureMeasurement).toList())
                 .to(DETECTED_ANOMALIES, Produced.with(Serdes.Long(), anomalyDetectedValueSerde));
-
+;
         return streamsBuilder.build();
     }
 }
