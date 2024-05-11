@@ -3,6 +3,7 @@ package com.johnysoft.measurement_generator;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.common.serialization.LongSerializer;
 
 import java.util.Optional;
@@ -12,8 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.*;
 
 public class Main {
     private static final Random RANDOM = new Random();
@@ -24,12 +24,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
         KafkaProducer<Long, TemperatureMeasurement> producer = new KafkaProducer<>(prepareConfiguration());
 
-        for (int i = 0;i<1000;i++) {
+        while (true) {
             TemperatureMeasurement measurement = generate();
             producer.send(new ProducerRecord<>(TEMPERATURE_MEASUREMENTS_TOPIC, measurement.getThermometerId(), measurement));
             TimeUnit.NANOSECONDS.sleep(500);
         }
-        producer.close();
     }
 
     private static Properties prepareConfiguration() {
@@ -38,6 +37,8 @@ public class Main {
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         properties.put(SCHEMA_REGISTRY_URL_CONFIG, envVariableOrDefault(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_DEFAULT_URL));
+        properties.put(COMPRESSION_TYPE_CONFIG, CompressionType.SNAPPY.name);
+        properties.put(ACKS_CONFIG, "0");
         return properties;
     }
 
