@@ -21,6 +21,30 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+#  kafdrop:
+#    image: obsidiandynamics/kafdrop
+#    restart: "no"
+#    ports:
+#      - "9000:9000"
+#    environment:
+#      KAFKA_BROKERCONNECT: "kafka:9092"
+#      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081
+#    depends_on:
+#      - "kafka"
+#      - "schema-registry"
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 9000:8080
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    volumes:
+      - "./config/kafkaui/dynamic_config.yaml:/etc/kafkaui/dynamic_config.yaml"
   schema-registry:
     image: confluentinc/cp-schema-registry:7.5.0
     hostname: schema-registry
