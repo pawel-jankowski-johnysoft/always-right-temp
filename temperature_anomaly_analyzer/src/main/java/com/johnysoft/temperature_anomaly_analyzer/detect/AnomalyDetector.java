@@ -3,8 +3,8 @@ package com.johnysoft.temperature_anomaly_analyzer.detect;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.OptionalDouble;
 
 import static lombok.AccessLevel.PACKAGE;
@@ -18,7 +18,7 @@ class AnomalyDetector {
 
     private int anomalyThreshold;
 
-    private final List<InternalTemperatureMeasurement> measurements = new ArrayList<>();
+    private InternalTemperatureMeasurement[] measurements;
 
     private int currentMeasurement = 0;
 
@@ -28,6 +28,7 @@ class AnomalyDetector {
     private AnomalyDetector(int lastRecentMeasurements, int anomalyThreshold) {
         this.anomalyThreshold = anomalyThreshold;
         this.lastRecentMeasurements = lastRecentMeasurements;
+        measurements = new InternalTemperatureMeasurement[lastRecentMeasurements];
     }
 
     public AnomalyDetector process(InternalTemperatureMeasurement measurement) {
@@ -38,16 +39,15 @@ class AnomalyDetector {
     }
 
     private OptionalDouble getPotentialAverageTemperature() {
-        return measurements.stream().mapToDouble(InternalTemperatureMeasurement::getTemperature).average();
+        return Arrays.stream(measurements).filter(Objects::nonNull).mapToDouble(InternalTemperatureMeasurement::getTemperature).average();
     }
-
 
     private void checkAnomaly(double averageTemperature, InternalTemperatureMeasurement measurement) {
         anomaly = Math.abs(averageTemperature - measurement.getTemperature()) > anomalyThreshold ? measurement : null;
     }
 
     private void addToMeasurements(InternalTemperatureMeasurement measurement) {
-        measurements.add(currentMeasurement, measurement);
+        measurements[currentMeasurement] = measurement;
         currentMeasurement = (currentMeasurement + 1) % lastRecentMeasurements;
     }
 
