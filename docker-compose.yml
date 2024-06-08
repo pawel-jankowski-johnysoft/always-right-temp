@@ -162,4 +162,4 @@ services:
     volumes:
       - ./config/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./config/grafana/dashboards.json:/etc/grafana/provisioning/dashboards/dashboards/dashboards.json
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards/dashboards

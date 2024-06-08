@@ -18,3 +18,8 @@ spring:
 anomaly:
   last_recent_measurements: ${ANOMALY_LAST_RECENT_MEASUREMENTS:10}
   anomaly_threshold: ${ANOMALY_THRESHOLD:5}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
