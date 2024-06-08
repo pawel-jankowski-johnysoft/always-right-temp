@@ -10,7 +10,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @NoArgsConstructor(access = PRIVATE)
 public class SerdesFactories {
-    public static  <T> Serde<T> fromJSONSerdes(Class<T> tClass) {
+    public static  <T> Serde<T> JSONSerdes(Class<T> tClass) {
         return Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(tClass));
     }
 }

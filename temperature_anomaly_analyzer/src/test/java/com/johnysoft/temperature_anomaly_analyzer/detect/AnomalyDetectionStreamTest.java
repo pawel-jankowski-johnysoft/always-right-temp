@@ -32,7 +32,7 @@ class AnomalyDetectionStreamTest {
     @BeforeEach
     public void init() {
         StreamsBuilder streamsBuilder = new StreamsBuilder();
-        Topology topology = CONFIGURATION.detectAnomalyTopology(streamsBuilder, SerdesFactories.fromJSONSerdes(TemperatureMeasurement.class), LAST_RECENT_MEASUREMENTS, ANOMALY_THRESHOLD);
+        Topology topology = CONFIGURATION.detectAnomalyTopology(streamsBuilder, SerdesFactories.JSONSerdes(TemperatureMeasurement.class), LAST_RECENT_MEASUREMENTS, ANOMALY_THRESHOLD);
 
         topologyTestDriver = new TopologyTestDriver(topology, new Properties());
         this.inputTopic = topologyTestDriver.createInputTopic(TEMPERATURE_MEASUREMENTS, new LongSerializer(), new JsonSerializer<>());

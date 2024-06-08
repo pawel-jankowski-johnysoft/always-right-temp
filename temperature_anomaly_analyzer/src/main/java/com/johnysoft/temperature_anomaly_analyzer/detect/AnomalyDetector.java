@@ -3,6 +3,7 @@ package com.johnysoft.temperature_anomaly_analyzer.detect;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.OptionalDouble;
@@ -32,9 +33,11 @@ class AnomalyDetector {
     }
 
     public AnomalyDetector process(InternalTemperatureMeasurement measurement) {
+        Instant beforeProcessing = Instant.now();
         getPotentialAverageTemperature()
                 .ifPresent(averageTemperature -> checkAnomaly(averageTemperature, measurement));
         addToMeasurements(measurement);
+        MetricsRecorder.recordAnomalyDetectingTime(beforeProcessing);
         return this;
     }
 
