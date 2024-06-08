@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   zookeeper:
     image: wurstmeister/zookeeper
@@ -138,3 +136,30 @@ services:
     ports:
       - 27019:27019
 
+
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent
+    depends_on:
+      - "victoriametrics"
+    ports:
+      - 8429:8429
+    volumes:
+      - ./config/victoriametrics/scrape_configs.yml:/etc/victoriametrics/scrape_configs.yml
+    command:
+      - "--promscrape.config=/etc/victoriametrics/scrape_configs.yml"
+      - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    ports:
+      - 8428:8428
+
+  grafana:
+    image: grafana/grafana-oss
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./config/grafana/dashboards.json:/etc/grafana/provisioning/dashboards/dashboards/dashboards.json
