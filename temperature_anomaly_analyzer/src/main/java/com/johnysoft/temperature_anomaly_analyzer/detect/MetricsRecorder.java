@@ -30,7 +30,7 @@ class MetricsRecorder {
                 .record(Duration.between(beforeProcessing, Instant.now()));
     }
 
-    public static void recordDetectedAnomaly() {
+    static void recordDetectedAnomaly() {
         Metrics.counter(MetricsNames.DETECTED_ANOMALIES, app()).increment();
     }
 
@@ -38,12 +38,12 @@ class MetricsRecorder {
         return Tags.of(MetricsNames.APP_TAG, applicationName);
     }
 
-    private class MetricsNames {
+    static class MetricsNames {
         private static final String TEMPERATURE_MEASUREMENT_CONSUMING = "temperature_measurement_consuming";
         private static final String ANOMALY_DETECTING_METRIC = "anomaly_detecting";
         private static final String DETECTED_ANOMALIES = "detected_anomalies";
 
         private static final String APP_TAG = "app";
-
+        static final String APPLICATION_COMMON_TAG = "application";
     }
 }

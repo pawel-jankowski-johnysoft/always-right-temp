@@ -97,21 +97,22 @@ services:
       timeout: 10s
       retries: 3
 
-#  temperature-measurement-generator:
-#    image: temperature_measurement_generator
-#    depends_on:
-#      kafka-connect:
-#        condition: service_healthy
-#    environment:
-#      schema.registry.url: http://schema-registry:8081
+  temperature-measurement-generator:
+    image: temperature_measurement_generator
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+    environment:
+      schema.registry.url: http://schema-registry:8081
+      server.port: 80
 #  temperature-anomaly-analyzer:
 #    image: temperature_anomaly_analyzer
 #    depends_on:
 #      kafka-connect:
 #        condition: service_healthy
 #    environment:
-#      spring.kafka.properties.schema.registry.url: http://schema-registry:8081
-
+#      spring.cloud.stream.kafka.streams.binder.configuration.schema.registry.url: http://schema-registry:8081
+#      server.port: 80
 
   mongo:
     image: mongo:latest

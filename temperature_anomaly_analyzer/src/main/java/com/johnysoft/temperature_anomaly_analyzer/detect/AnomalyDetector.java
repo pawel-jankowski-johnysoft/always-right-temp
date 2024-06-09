@@ -32,7 +32,7 @@ class AnomalyDetector {
         measurements = new InternalTemperatureMeasurement[lastRecentMeasurements];
     }
 
-    public AnomalyDetector process(InternalTemperatureMeasurement measurement) {
+    AnomalyDetector process(InternalTemperatureMeasurement measurement) {
         Instant beforeProcessing = Instant.now();
         getPotentialAverageTemperature()
                 .ifPresent(averageTemperature -> checkAnomaly(averageTemperature, measurement));

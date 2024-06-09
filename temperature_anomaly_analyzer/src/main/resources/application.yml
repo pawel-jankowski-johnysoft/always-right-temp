@@ -1,20 +1,31 @@
 spring:
+  cloud:
+    stream:
+      kafka:
+        streams:
+          bindings:
+            anomalyDetection-in-0:
+              consumer:
+                key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
+                value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
+            anomalyDetection-out-0:
+              producer:
+                key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
+                value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
+          binder:
+            configuration:
+              schema.registry.url: http://localhost:8081
+      bindings:
+        anomalyDetection-in-0:
+          destination: temperature-measurements
+        anomalyDetection-out-0:
+          destination: detected-anomalies
+
   kafka:
     bootstrap-servers: kafka:9092
-    consumer:
-      auto-offset-reset: earliest
     streams:
       application-id: temperature-measurements
-      properties:
-        producer:
-#          compression.type: snappy
-#          acks: 0
-#          max.in.flight.requests.per.connection: 10
 
-#      different value generates strange behaviour - stream terminal operation
-#      state-store-cache-max-size: 0
-#      remainder
-#      state-dir: in-memory
 anomaly:
   last_recent_measurements: ${ANOMALY_LAST_RECENT_MEASUREMENTS:10}
   anomaly_threshold: ${ANOMALY_THRESHOLD:5}
