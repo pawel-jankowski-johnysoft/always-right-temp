@@ -11,6 +11,8 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
+
 import static java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -18,9 +20,11 @@ import static lombok.AccessLevel.PRIVATE;
 @RequiredArgsConstructor
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 class AnomaliesProvider {
+    private static final int HISTORY_SIZE = 1000;
+    private static final Duration MAX_AGE = Duration.ofMinutes(1);
     ReactiveMongoTemplate reactiveMongoTemplate;
 
-    Sinks.Many<Measurement> measurements = Sinks.many().replay().all();
+    Sinks.Many<Measurement> measurements = Sinks.many().replay().limit(HISTORY_SIZE, MAX_AGE);
     Scheduler measurementsScheduler = Schedulers.fromExecutor(newVirtualThreadPerTaskExecutor());
 
     @PostConstruct()

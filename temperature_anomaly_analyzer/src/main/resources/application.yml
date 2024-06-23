@@ -1,30 +1,39 @@
 spring:
   cloud:
     stream:
+      function:
+        bindings:
+          # allows to create aliases to functions
+          anomalyDetection-in-0: temperature-measurements
+          anomalyDetection-out-0: detected-anomalies
       kafka:
         streams:
           bindings:
-            anomalyDetection-in-0:
+            temperature-measurements:
               consumer:
                 key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
                 value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
-            anomalyDetection-out-0:
+            detected-anomalies:
               producer:
                 key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
                 value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
           binder:
             configuration:
               schema.registry.url: http://localhost:8081
+              num.stream.threads: 100
       bindings:
-        anomalyDetection-in-0:
+        temperature-measurements:
+          group: anomaly-analyzer
           destination: temperature-measurements
-        anomalyDetection-out-0:
+        detected-anomalies:
           destination: detected-anomalies
+    function:
+      definition: anomalyDetection
 
   kafka:
     bootstrap-servers: kafka:9092
     streams:
-      application-id: temperature-measurements
+      application-id: anomaly-analyzer
 
 anomaly:
   last_recent_measurements: ${ANOMALY_LAST_RECENT_MEASUREMENTS:10}
