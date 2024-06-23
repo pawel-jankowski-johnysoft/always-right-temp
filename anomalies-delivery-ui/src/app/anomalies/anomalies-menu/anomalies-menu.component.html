@@ -1,0 +1,27 @@
+<mat-toolbar class="toolbar">
+  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu">
+    @if (!realTimeAnomaliesListener.isEnabled()) {
+      <button mat-menu-item *ngIf="!realTimeAnomaliesListener.isEnabled()" (click)="this.realTimeAnomaliesListener.enable();">
+        <mat-icon>swap_vert</mat-icon>
+        <span>Enable fetching anomalies in real time </span>
+      </button>
+    } @else {
+      <button mat-menu-item (click)="this.realTimeAnomaliesListener.disable();">
+        <mat-icon>mobiledata_off</mat-icon>
+        <span>Disable fetching anomalies in real time</span>
+      </button>
+
+      <button mat-menu-item *ngIf="!realTimeAnomaliesListener.isShowSnacksEnabled()" (click)="registerSnackbarListener()">
+        <mat-icon>notifications</mat-icon>
+        <span>Show snacks notifications</span>
+      </button>
+      <button mat-menu-item *ngIf="realTimeAnomaliesListener.isShowSnacksEnabled()" (click)="unregisterSnackbarListener()">
+        <mat-icon>notifications_off</mat-icon>
+        <span>Hide snacks notifications</span>
+      </button>
+      }
+  </mat-menu>
+</mat-toolbar>
