@@ -1,11 +1,17 @@
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: zookeeper
     ports:
       - "2181:2181"
 
+  zoonavigator:
+    image: elkozmon/zoonavigator
+    ports:
+      - "2182:2182"
+    environment:
+      HTTP_PORT: 2182
   kafka:
-    image: wurstmeister/kafka
+    image: confluentinc/cp-kafka
     ports:
       - "9092:9092"
     depends_on:
@@ -17,31 +23,7 @@ services:
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-  kafdrop:
-    image: obsidiandynamics/kafdrop
-    ports:
-      - "9000:9000"
-    environment:
-      KAFKA_BROKERCONNECT: "kafka:9092"
-      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081
-    depends_on:
-      - "kafka"
-      - "schema-registry"
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - 9001:8080
-    depends_on:
-      - kafka
-      - schema-registry
-    environment:
-      DYNAMIC_CONFIG_ENABLED: 'true'
-      KAFKA_CLUSTERS_0_NAME: kafka
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-    volumes:
-      - "./config/kafkaui/dynamic_config.yaml:/etc/kafkaui/dynamic_config.yaml"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
   schema-registry:
     image: confluentinc/cp-schema-registry:7.5.0
     hostname: schema-registry
@@ -160,7 +142,68 @@ services:
     image: grafana/grafana-oss
     ports:
       - 3000:3000
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
     volumes:
       - ./config/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
       - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards/dashboards
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9092"
+      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081
+    depends_on:
+      - "kafka"
+      - "schema-registry"
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "9001:8080"
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    volumes:
+      - "./config/kafkaui/dynamic_config.yaml:/etc/kafkaui/dynamic_config.yaml"
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui
+    ports:
+      - "9002:8000"
+    environment:
+      CONNECT_URL: http://kafka-connect:8083
+  kafka-manager:
+    image: ghcr.io/eshepelyuk/dckr/cmak-3.0.0.5:latest
+    restart: always
+    ports:
+      - "9003:9000"
+    environment:
+      ZK_HOSTS: "zookeeper:2181"
+
+  akhq:
+    image: tchiotludo/akhq
+    restart: unless-stopped
+    ports:
+      - 9004:8080
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka:9092"
+              schema-registry:
+                url: "http://schema-registry:8081"
+              connect:
+                - name: "connect"
+                  url: "http://connect:8083"
+
+    links:
+      - kafka
+      - schema-registry
