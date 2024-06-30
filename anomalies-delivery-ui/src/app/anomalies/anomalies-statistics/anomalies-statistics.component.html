@@ -1,0 +1,8 @@
+<h2 class="center">Detected anomalies grouped by room: </h2>
+<div class="wrapper">
+  <ngx-charts-pie-grid
+    [scheme]="colorScheme"
+    [animations]=true
+    [results]="statistics | async">
+  </ngx-charts-pie-grid>
+</div>

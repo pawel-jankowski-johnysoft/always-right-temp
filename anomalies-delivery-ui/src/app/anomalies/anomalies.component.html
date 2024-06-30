@@ -1,37 +1,39 @@
 <div class="container">
 
-  <anomalies-menu />
+    <anomalies-statistics *ngIf="store.streamEnabled()"/>
 
-  <div class="anomalies">
-    <table mat-table [dataSource]="dataSource">
+    <anomalies-menu/>
 
-      <ng-container matColumnDef="room">
-        <th mat-header-cell *matHeaderCellDef> Room </th>
-        <td mat-cell *matCellDef="let element"> {{element.roomId}} </td>
-      </ng-container>
+    <div class="anomalies">
+        <table mat-table [dataSource]="dataSource">
 
-      <ng-container matColumnDef="thermometer">
-        <th mat-header-cell *matHeaderCellDef> Thermometer </th>
-        <td mat-cell *matCellDef="let element"> {{element.thermometerId}} </td>
-      </ng-container>
+            <ng-container matColumnDef="room">
+                <th mat-header-cell *matHeaderCellDef> Room</th>
+                <td mat-cell *matCellDef="let element"> {{ element.roomId }}</td>
+            </ng-container>
 
-      <ng-container matColumnDef="temperature">
-        <th mat-header-cell *matHeaderCellDef> Temperature </th>
-        <td mat-cell *matCellDef="let element"> {{element.temperature}} </td>
-      </ng-container>
-      <ng-container matColumnDef="timestamp">
-        <th mat-header-cell *matHeaderCellDef> Timestamp </th>
-        <td mat-cell *matCellDef="let element"> {{element.timestamp | date:'medium'}} </td>
-      </ng-container>
+            <ng-container matColumnDef="thermometer">
+                <th mat-header-cell *matHeaderCellDef> Thermometer</th>
+                <td mat-cell *matCellDef="let element"> {{ element.thermometerId }}</td>
+            </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
+            <ng-container matColumnDef="temperature">
+                <th mat-header-cell *matHeaderCellDef> Temperature</th>
+                <td mat-cell *matCellDef="let element"> {{ element.temperature }}</td>
+            </ng-container>
+            <ng-container matColumnDef="timestamp">
+                <th mat-header-cell *matHeaderCellDef> Timestamp</th>
+                <td mat-cell *matCellDef="let element"> {{ element.timestamp | date:'medium' }}</td>
+            </ng-container>
 
-    <mat-paginator [pageSizeOptions]="[5, 10, 15]"
-                   showFirstLastButtons
-                   aria-label="Select page of periodic elements">
-    </mat-paginator>
-  </div>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator [pageSizeOptions]="[5, 10, 15]"
+                       showFirstLastButtons
+                       aria-label="Select page of periodic elements">
+        </mat-paginator>
+    </div>
 
 </div>
