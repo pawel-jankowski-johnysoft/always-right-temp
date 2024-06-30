@@ -22,6 +22,7 @@
     "@angular/router": "^18.0.0",
     "@ngrx/signals": "^18.0.0-rc.1",
     "@ngrx/store": "^18.0.0",
+    "@swimlane/ngx-charts": "^20.5.0",
     "angular-sse-client": "^0.1.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

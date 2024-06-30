@@ -4,15 +4,13 @@ import {getState} from "@ngrx/signals";
 import {AnomaliesMenuComponent} from "./anomalies-menu/anomalies-menu.component";
 import {MatTableDataSource, MatTableModule} from "@angular/material/table";
 import {MatPaginator, MatPaginatorModule} from "@angular/material/paginator";
-import {DatePipe} from "@angular/common";
+import {DatePipe, NgIf} from "@angular/common";
+import {AnomaliesStatisticsComponent} from "./anomalies-statistics/anomalies-statistics.component";
 
 @Component({
   selector: 'anomalies',
   standalone: true,
-  imports: [
-    AnomaliesMenuComponent,
-    MatTableModule, MatPaginatorModule, DatePipe
-  ],
+  imports: [AnomaliesMenuComponent, MatTableModule, MatPaginatorModule, DatePipe, AnomaliesStatisticsComponent, NgIf ],
   templateUrl: './anomalies.component.html',
   styleUrl: './anomalies.component.scss'
 })
