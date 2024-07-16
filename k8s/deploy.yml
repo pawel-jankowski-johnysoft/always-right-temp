@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      name: kafka
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafkakraft
+          image: confluentinc/confluent-local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+            - containerPort: 29092
+            - containerPort: 29093
+          env:
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://localhost:29092,PLAINTEXT_HOST://kafkaservice:9092"
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: "1@localhost:29093"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://localhost:29092,CONTROLLER://localhost:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+            - name: CLUSTER_ID
+              value: "MkU3OEVBNTcwNTJENDM2Qk"
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafkaservice
+spec:
+  selector:
+    app: kafka
+  ports:
+    - protocol: TCP
+      port: 9092
+      targetPort: 9092
+      name: "9092"
+    - protocol: TCP
+      port: 29092
+      targetPort: 29092
+      name: "29092"
+    - protocol: TCP
+      port: 29093
+      targetPort: 29093
+      name: "29093"
+    - protocol: TCP
+      port: 9093
+      targetPort: 9093
+      name: "9093"
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temperatureanomalygenerator
+  labels:
+    app: temperatureanomalygenerator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temperatureanomalygenerator
+  template:
+    metadata:
+      name: temperatureanomalygenerator
+      labels:
+        app: temperatureanomalygenerator
+    spec:
+      containers:
+        - name: temperatureanomalygenerator
+          image: temperature_measurement_generator
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_ADDRESS
+              value: kafkaservice:9092
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temperatureanomalyanalyzer
+  labels:
+    app: temperatureanomalyanalyzer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temperatureanomalyanalyzer
+  template:
+    metadata:
+      name: temperatureanomalyanalyzer
+      labels:
+        app: temperatureanomalyanalyzer
+    spec:
+      containers:
+        - name: temperatureanomalyanalyzer
+          image: temperature_anomaly_analyzer
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: kafkaservice:9092
+      restartPolicy: Always
