@@ -36,7 +36,7 @@ class AnomalyDetectionConfiguration {
     }
 
     @Bean
-    NewTopic TEMPERATURE_MEASUREMENTS() {
+    NewTopic temperatureMeasurements() {
         return TopicBuilder.name(TEMPERATURE_MEASUREMENTS)
                 .replicas(1)
                 .partitions(3)
@@ -64,14 +64,14 @@ class AnomalyDetectionConfiguration {
     }
 
     private FixedKeyProcessorSupplier<Long, TemperatureMeasurement, TemperatureMeasurement> timeMeasurementConsumingSupplier() {
-        return fixKeyProcessorSuplier(record -> MetricsRecorder.recordTemperatureMeasurementConsuming(Instant.ofEpochMilli(record.timestamp())));
+        return fixKeyProcessorSupplier(record -> MetricsRecorder.recordTemperatureMeasurementConsuming(Instant.ofEpochMilli(record.timestamp())));
     }
 
     private FixedKeyProcessorSupplier<Long, TemperatureMeasurement, TemperatureMeasurement> timeMeasurementAnomalyDetectedSupplier() {
-        return fixKeyProcessorSuplier(__ -> MetricsRecorder.recordDetectedAnomaly());
+        return fixKeyProcessorSupplier(__ -> MetricsRecorder.recordDetectedAnomaly());
     }
 
-    private FixedKeyProcessorSupplier<Long, TemperatureMeasurement, TemperatureMeasurement> fixKeyProcessorSuplier(Consumer<FixedKeyRecord<Long, TemperatureMeasurement>> action) {
+    private FixedKeyProcessorSupplier<Long, TemperatureMeasurement, TemperatureMeasurement> fixKeyProcessorSupplier(Consumer<FixedKeyRecord<Long, TemperatureMeasurement>> action) {
         return () -> new FixedKeyProcessor<>() {
             private FixedKeyProcessorContext<Long, TemperatureMeasurement> context;
 

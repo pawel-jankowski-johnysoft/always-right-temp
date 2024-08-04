@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temperature-measurement-generator
+  labels:
+    app: temperature-measurement-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temperature-measurement-generator
+  template:
+    metadata:
+      name: temperature-measurement-generator
+      labels:
+        app: temperature-measurement-generator
+    spec:
+      containers:
+        - name: temperature-measurement-generator
+          image: temperature_measurement_generator
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: schema.registry.url
+              value: http://schema-registry:8081
+            - name: bootstrap.servers
+              value: kafka-kafka-bootstrap:9092
+            - name: spring.kafka.admin.auto-create-topics
+              value: "false"
+      restartPolicy: Always

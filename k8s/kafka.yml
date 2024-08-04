@@ -1,0 +1,119 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: controller
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  replicas: 3
+  roles:
+    - controller
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 5Gi
+        kraftMetadata: shared
+        deleteClaim: false
+---
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: broker
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  replicas: 3
+  roles:
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 5Gi
+        kraftMetadata: shared
+        deleteClaim: false
+---
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: kafka
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    version: 3.7.1
+    metadataVersion: 3.7-IV4
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      auto.create.topics.enable: "false"
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-kafka-topics
+spec:
+  template:
+    spec:
+      containers:
+        - name: create-topics
+          image: confluentinc/cp-kafka:latest
+          command: [ "/bin/bash", "/scripts/create-topics.sh" ]
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-kafka-bootstrap:9092"
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox
+          command: ['sh', '-c', 'until nc -z kafka-kafka-bootstrap 9092; do echo waiting for kafka; sleep 2; done;']
+      restartPolicy: OnFailure
+      volumes:
+        - name: script-volume
+          configMap:
+            name: kafka-create-topics-script
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-create-topics-script
+data:
+  create-topics.sh: |
+    #!/bin/bash
+
+    BOOTSTRAP_SERVERS="${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}"
+    TOPICS=("temperature-measurements:1" "detected-anomalies:1")
+
+    create_topic() {
+      local topic_name=$(echo $1 | cut -d':' -f1)
+      local partitions=$(echo $1 | cut -d':' -f2)
+      /bin/kafka-topics --create --bootstrap-server $BOOTSTRAP_SERVERS --replication-factor 1 --partitions $partitions --topic $topic_name
+    }
+
+    for topic in "${TOPICS[@]}"; do
+      create_topic $topic
+    done
+

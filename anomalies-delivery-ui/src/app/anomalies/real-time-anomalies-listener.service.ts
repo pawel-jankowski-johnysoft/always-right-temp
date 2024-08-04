@@ -8,7 +8,7 @@ import {AnomaliesStore} from "./anomalies.store";
 })
 export class RealTimeAnomaliesListener {
 
-  private static readonly ANOMALIES_DELIVERY_URL = 'http://localhost:8080/anomalies/sse';
+  private static readonly ANOMALIES_DELIVERY_URL = '/api/anomalies/sse';
 
   private observers: AnomalyListener[] = [new PrintAnomalyToConsoleListener()]
 

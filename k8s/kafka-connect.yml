@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect
+  labels:
+    app: kafka-connect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-connect
+  template:
+    metadata:
+      name: kafka-connect
+      labels:
+        app: kafka-connect
+    spec:
+      containers:
+        - name: kafka-connect
+          image: confluentinc/cp-kafka-connect
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: example-mongodb-admin-johnthebest
+                  key: connectionString.standardSrv
+            - name: CONNECT_BOOTSTRAP_SERVERS
+              value: kafka-kafka-bootstrap:9092
+            - name: CONNECT_REST_PORT
+              value: "8083"
+            - name: CONNECT_GROUP_ID
+              value: kafka-connect-group
+            - name: CONNECT_CONFIG_STORAGE_TOPIC
+              value: kafka-connect-configs
+            - name: CONNECT_OFFSET_STORAGE_TOPIC
+              value: kafka-connect-offsets
+            - name: CONNECT_STATUS_STORAGE_TOPIC
+              value: kafka-connect-status
+            - name: CONNECT_KEY_CONVERTER
+              value: org.apache.kafka.connect.converters.LongConverter
+            - name: CONNECT_VALUE_CONVERTER
+              value: io.confluent.connect.avro.AvroConverter
+            - name: CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL
+              value: http://schema-registry:8081
+            - name: CONNECT_INTERNAL_KEY_CONVERTER
+              value: "org.apache.kafka.connect.converters.LongConverter"
+            - name: CONNECT_INTERNAL_VALUE_CONVERTER
+              value: "org.apache.kafka.connect.json.JsonConverter"
+            - name: CONNECT_REST_ADVERTISED_HOST_NAME
+              value: "kafka-connect"
+            - name: CONNECT_PLUGIN_PATH
+              value: "/usr/share/java,/usr/share/confluent-hub-components"
+            - name: CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR
+              value: "1"
+            - name: CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR
+              value: "1"
+            - name: CONNECT_STATUS_STORAGE_REPLICATION_FACTOR
+              value: "1"
+          ports:
+            - containerPort: 8083
+              protocol: TCP
+          volumeMounts:
+            - name: connector-config
+              mountPath: /setup-connector.sh
+              subPath: setup-connector.sh
+          command: [ "bash", "-c", "--" ]
+          args:
+            - |
+              confluent-hub install --no-prompt --verbose mongodb/kafka-connect-mongodb:latest
+              sleep 10
+              /etc/confluent/docker/run &
+              sleep 30
+              /setup-connector.sh
+              sleep infinity
+      restartPolicy: Always
+      securityContext:
+        runAsUser: 0
+      volumes:
+        - name: connector-config
+          configMap:
+            name: kafka-connect-config
+            defaultMode: 0777
+            items:
+              - key: setup-connector.sh
+                path: setup-connector.sh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-connect
+spec:
+  selector:
+    app: kafka-connect
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-config
+data:
+  setup-connector.sh: |
+    #!/bin/bash
+    
+    # 1) Generowanie losowej nazwy dla pliku
+    RANDOM_FILE_NAME=$(mktemp /tmp/connector-XXXXX.json)
+    
+    # Funkcja do zapisywania connectora do pliku
+    save_connector() {
+      local file_name=$1
+      local mongodb_uri=$2
+    
+      cat <<EOF > "$file_name"
+    {
+        "name": "detected-anomalies-mongo-sink",
+        "config": {
+          "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector",
+          "connection.uri": "$mongodb_uri",
+          "database": "anomalies",
+          "collection": "detected-anomalies",
+          "topics": "detected-anomalies"
+        }
+      }
+    EOF
+    }
+
+    # 2) Wywołanie funkcji z nazwą pliku i wartością zmiennej środowiskowej MONGODB_URI
+    save_connector "$RANDOM_FILE_NAME" "$MONGODB_URI"
+
+    # 3) Uruchomienie polecenia curl, aby utworzyć nowy connector
+    curl -X POST -H "Content-Type: application/json" --data @"$RANDOM_FILE_NAME" http://localhost:8083/connectors
+
+    # Usunięcie tymczasowego pliku
+    rm "$RANDOM_FILE_NAME"
