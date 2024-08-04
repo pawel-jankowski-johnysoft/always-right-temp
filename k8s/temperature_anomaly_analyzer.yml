@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temperature-anomaly-analyzer
+  labels:
+    app: temperature-anomaly-analyzer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temperature-anomaly-analyzer
+  template:
+    metadata:
+      name: temperature-anomaly-analyzer
+      labels:
+        app: temperature-anomaly-analyzer
+    spec:
+      containers:
+        - name: temperature-anomaly-analyzer
+          image: temperature_anomaly_analyzer
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          env:
+            - name: SPRING_CLOUD_STREAM_KAFKA_STREAMS_BINDER_CONFIGURATION_SCHEMA_REGISTRY_URL
+              value: http://schema-registry:8081
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: kafka-kafka-bootstrap:9092
+            - name: SERVER_PORT
+              value: "80"
+            - name: SPRING_KAFKA_ADMIN_AUTO_CREATE_TOPICS
+              value: "false"
+            - name: SPRING_ANOMALY_ANOMALY_THRESHOLD
+              value: "1"
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temperature-anomaly-analyzer
+spec:
+  selector:
+    app: temperature-anomaly-analyzer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+

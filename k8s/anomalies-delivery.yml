@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomalies-delivery
+  labels:
+    app: anomalies-delivery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomalies-delivery
+  template:
+    metadata:
+      name: anomalies-delivery
+      labels:
+        app: anomalies-delivery
+    spec:
+      containers:
+        - name: anomalies-delivery
+          image: anomalies_delivery
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: example-mongodb-admin-johnthebest
+                  key: connectionString.standardSrv
+            - name: SERVER_PORT
+              value: "80"
+          ports:
+            - containerPort: 80
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomalies-delivery
+spec:
+  selector:
+    app: anomalies-delivery
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomalies-delivery-ui
+  labels:
+    app: anomalies-delivery-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomalies-delivery-ui
+  template:
+    metadata:
+      name: anomalies-delivery-ui
+      labels:
+        app: anomalies-delivery-ui
+    spec:
+      containers:
+        - name: anomalies-delivery-ui
+          image: anomalies_delivery_ui
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomalies-delivery-ui
+spec:
+  selector:
+    app: anomalies-delivery-ui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apps
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: anomalies-delivery.johnthebest.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: anomalies-delivery-ui
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-routing-to-anomalies-delivery
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: anomalies-delivery.johnthebest.com
+      http:
+        paths:
+        - path: /api/(.*)
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: anomalies-delivery
+              port:
+                number: 80

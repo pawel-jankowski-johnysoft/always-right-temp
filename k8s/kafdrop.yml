@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafdrop
+  labels:
+    app: kafdrop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafdrop
+  template:
+    metadata:
+      name: kafdrop
+      labels:
+        app: kafdrop
+    spec:
+      containers:
+        - name: kafdrop
+          image: obsidiandynamics/kafdrop
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_BROKERCONNECT
+              value: "kafka-kafka-bootstrap:9092"
+            - name: SCHEMAREGISTRY_CONNECT
+              value: "http://schema-registry:8081"
+          ports:
+            - containerPort: 9000
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafdrop
+spec:
+  selector:
+    app: kafdrop
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+  type: ClusterIP
