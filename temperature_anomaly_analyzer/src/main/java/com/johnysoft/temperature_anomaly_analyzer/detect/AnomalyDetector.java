@@ -2,6 +2,7 @@ package com.johnysoft.temperature_anomaly_analyzer.detect;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import static lombok.AccessLevel.PACKAGE;
 /*Getter is needed to store aggregate state */
 @Getter
 @NoArgsConstructor(access = PACKAGE)
+@Slf4j
 class AnomalyDetector {
 
     private int lastRecentMeasurements;
@@ -33,6 +35,7 @@ class AnomalyDetector {
     }
 
     AnomalyDetector process(InternalTemperatureMeasurement measurement) {
+        log.debug("process measurement: {}", measurement);
         Instant beforeProcessing = Instant.now();
         getPotentialAverageTemperature()
                 .ifPresent(averageTemperature -> checkAnomaly(averageTemperature, measurement));

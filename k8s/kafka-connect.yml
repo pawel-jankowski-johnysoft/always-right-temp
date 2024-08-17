@@ -23,7 +23,7 @@ spec:
             - name: MONGODB_URI
               valueFrom:
                 secretKeyRef:
-                  name: example-mongodb-admin-johnthebest
+                  name: anomalies-mongodb-admin-johnthebest
                   key: connectionString.standardSrv
             - name: CONNECT_BOOTSTRAP_SERVERS
               value: kafka-kafka-bootstrap:9092
@@ -106,10 +106,8 @@ data:
   setup-connector.sh: |
     #!/bin/bash
     
-    # 1) Generowanie losowej nazwy dla pliku
     RANDOM_FILE_NAME=$(mktemp /tmp/connector-XXXXX.json)
     
-    # Funkcja do zapisywania connectora do pliku
     save_connector() {
       local file_name=$1
       local mongodb_uri=$2
@@ -128,11 +126,8 @@ data:
     EOF
     }
 
-    # 2) Wywołanie funkcji z nazwą pliku i wartością zmiennej środowiskowej MONGODB_URI
     save_connector "$RANDOM_FILE_NAME" "$MONGODB_URI"
 
-    # 3) Uruchomienie polecenia curl, aby utworzyć nowy connector
     curl -X POST -H "Content-Type: application/json" --data @"$RANDOM_FILE_NAME" http://localhost:8083/connectors
 
-    # Usunięcie tymczasowego pliku
     rm "$RANDOM_FILE_NAME"

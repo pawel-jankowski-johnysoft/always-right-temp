@@ -1,8 +1,12 @@
 #k3d cluster create --api-port 6550 -p '9080:80@loadbalancer' -p '9443:443@loadbalancer' --agents 2 --k3s-arg '--disable=traefik@server:*'
-k3d cluster create --api-port 6550 -p '80:80@loadbalancer' -p '443:443@loadbalancer' --agents 2 --k3s-arg="--disable=traefik@server:0"
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
+k3d cluster create --api-port 6550 -p '80:80@loadbalancer' -p '443:443@loadbalancer' --agents 1 --k3s-arg="--disable=traefik@server:0"
+istioctl install --set profile=demo -y
+kubectl apply -f /Users/johnthebest/Downloads/istio-master/manifests/charts/base/crds/crd-all.gen.yaml
+kubectl apply -f /Users/johnthebest/Downloads/istio-master/samples/addons
+kubectl label namespace default istio-injection=enabled
+#helm upgrade --install ingress-nginx ingress-nginx \
+#  --repo https://kubernetes.github.io/ingress-nginx \
+#  --namespace ingress-nginx --create-namespace
 helm install community-operator mongodb/community-operator
 #kubectl apply -f https://raw.githubusercontent.com/mongodb/mongodb-kubernetes-operator/master/config/samples/mongodb.com_v1_mongodbcommunity_cr.yaml
 helm install my-strimzi-cluster-operator --set replicas=3 oci://quay.io/strimzi-helm/strimzi-kafka-operator

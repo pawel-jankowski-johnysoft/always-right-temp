@@ -20,7 +20,6 @@ spring:
           binder:
             configuration:
               schema.registry.url: http://localhost:8081
-              num.stream.threads: 100
       bindings:
         temperature-measurements:
           group: anomaly-analyzer
