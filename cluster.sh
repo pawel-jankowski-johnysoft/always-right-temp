@@ -15,4 +15,4 @@ k3d image import temperature_anomaly_analyzer
 k3d image import temperature_measurement_generator
 k3d image import anomalies_delivery
 k3d image import anomalies_delivery_ui
-kubectl apply -f k8s/
+kubectl apply -R -f k8s/
