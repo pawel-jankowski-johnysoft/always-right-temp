@@ -1,0 +1,62 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: grafana-vs
+  namespace: default
+spec:
+  hosts:
+    - "grafana.johnthebest.com"
+  gateways:
+    - gw
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            # Because of grafana is in different namespace, it is required to use FQDN (Fully Qualified Domain Name)
+            host: grafana.istio-system.svc.cluster.local
+            port:
+              number: 3000
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: jaeger-vs
+  namespace: default
+spec:
+  hosts:
+    - "jaeger.johnthebest.com"
+  gateways:
+    - gw
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            # Because of jaeger is in different namespace than virtual service, it is required to use FQDN (Fully Qualified Domain Name)
+            host: tracing.istio-system.svc.cluster.local
+            port:
+              number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: kiali-vs
+  namespace: default
+spec:
+  hosts:
+    - "kiali.johnthebest.com"
+  gateways:
+    - gw
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            # Because of kiali is in different namespace than virtual service, it is required to use FQDN (Fully Qualified Domain Name)
+            host: kiali.istio-system.svc.cluster.local
+            port:
+              number: 20001

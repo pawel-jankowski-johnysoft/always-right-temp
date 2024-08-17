@@ -22,7 +22,11 @@ spec:
           ports:
             - containerPort: 80
               protocol: TCP
+#            - containerPort: 5005
+#              protocol: TCP
           env:
+            - name: SPRING_APPLICATION_NAME
+              value: temperature-anomaly-analyzer
             - name: SPRING_CLOUD_STREAM_KAFKA_STREAMS_BINDER_CONFIGURATION_SCHEMA_REGISTRY_URL
               value: http://schema-registry:8081
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
@@ -33,12 +37,29 @@ spec:
               value: "false"
             - name: SPRING_ANOMALY_ANOMALY_THRESHOLD
               value: "1"
+#              This is new way to pass args instead of JAVA_OPTS introduced since java +9
+#            - name: JAVA_TOOL_OPTIONS
+#              value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+            - name: LOGGING_CONFIG
+              value: "/app/config/logback.xml"
+          volumeMounts:
+            - name: anomaly-analyzer-config
+              mountPath: /app/config
       restartPolicy: Always
+      volumes:
+        - name: anomaly-analyzer-config
+          configMap:
+            name: logback-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: temperature-anomaly-analyzer
+#  Scrape metrics by istio prometheus
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "80"
 spec:
   selector:
     app: temperature-anomaly-analyzer
@@ -47,4 +68,39 @@ spec:
       port: 80
       targetPort: 80
   type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logback-config
+data:
+  logback.xml: |
+    <configuration>
+      <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+      <!--    <batchMaxItems>100</batchMaxItems>-->
+      <!--    <batchTimeoutMs>3000</batchTimeoutMs>-->
+      <!--    <verbose>true</verbose>-->
+      <http>
+      <url>http://loki.istio-system:3100/loki/api/v1/push</url>
+      </http>
+      <format>
+      <label>
+      <!-- <pattern>app=temperature_anomaly_analyzer,host=${HOSTNAME}</pattern> -->
+      <pattern>app=${SPRING_APPLICATION_NAME},host=${HOSTNAME}</pattern>
+      </label>
+      <message class="com.github.loki4j.logback.JsonLayout" />
+      </format>
+      </appender>
+      
+      <logger name="com.johnysoft.temperature_anomaly_analyzer.detect" level="DEBUG">
+            <appender-ref ref="LOKI" />
+      </logger>
+      <logger name="com.johnysoft.measurement_generator" level="DEBUG">
+            <appender-ref ref="LOKI" />
+      </logger>
+
+      <root level="INFO">
+        <appender-ref ref="LOKI" />
+      </root>
+    </configuration>
 

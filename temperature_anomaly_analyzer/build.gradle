@@ -27,6 +27,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-actuator-autoconfigure'
     implementation 'org.springframework.cloud:spring-cloud-stream'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka-streams'
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
 
     implementation project(":schemas")
     compileOnly 'org.projectlombok:lombok'

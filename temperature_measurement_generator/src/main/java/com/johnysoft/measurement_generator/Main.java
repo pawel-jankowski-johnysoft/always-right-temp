@@ -5,6 +5,8 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.common.serialization.LongSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Properties;
@@ -20,14 +22,15 @@ public class Main {
     private static final String TEMPERATURE_MEASUREMENTS_TOPIC = "temperature-measurements";
     private static final String DEFAULT_BROKER_DEFAULT_ADDRESS = "kafka:9092";
     private static final String SCHEMA_REGISTRY_DEFAULT_URL = "http://localhost:8081";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) throws Exception {
         KafkaProducer<Long, TemperatureMeasurement> producer = new KafkaProducer<>(prepareConfiguration());
 
         while (true) {
             TemperatureMeasurement measurement = generate();
+            LOGGER.info("generated measurement: {}", measurement);
             producer.send(new ProducerRecord<>(TEMPERATURE_MEASUREMENTS_TOPIC, measurement.getThermometerId(), measurement));
-            TimeUnit.NANOSECONDS.sleep(500);
+            TimeUnit.MILLISECONDS.sleep(500);
         }
     }
 

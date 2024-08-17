@@ -20,10 +20,21 @@ spec:
           image: temperature_measurement_generator
           imagePullPolicy: IfNotPresent
           env:
+            - name: SPRING_APPLICATION_NAME
+              value: temperature-measurement-generator
             - name: schema.registry.url
               value: http://schema-registry:8081
             - name: bootstrap.servers
               value: kafka-kafka-bootstrap:9092
             - name: spring.kafka.admin.auto-create-topics
               value: "false"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dlogback.configurationFile=/app/config/logback.xml"
+          volumeMounts:
+            - name: measurement-generator-config
+              mountPath: /app/config
       restartPolicy: Always
+      volumes:
+        - name: measurement-generator-config
+          configMap:
+            name: logback-config
