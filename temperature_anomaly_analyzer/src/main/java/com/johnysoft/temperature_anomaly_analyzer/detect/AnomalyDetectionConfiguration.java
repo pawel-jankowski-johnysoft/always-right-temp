@@ -6,8 +6,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessor;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessorContext;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessorSupplier;
@@ -19,7 +21,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,22 +46,22 @@ class AnomalyDetectionConfiguration {
 
     @Bean
     Function<KStream<Long, TemperatureMeasurement>, KStream<Long, TemperatureMeasurement>> anomalyDetection(@Value("${anomaly.last_recent_measurements}") int lastRecentMeasurements, @Value("${anomaly.anomaly_threshold}") int anomalyThreshold) {
-        return s -> s.processValues(timeMeasurementConsumingSupplier())
-                .mapValues(InternalTemperatureMeasurement::from)
-                .groupByKey()
+        return anomalyDetectionSource -> anomalyDetectionSource.processValues(timeMeasurementConsumingSupplier(), Named.as("measure-traveling-time"))
+                .mapValues(InternalTemperatureMeasurement::from, Named.as("convert-to-internal-measurement"))
+                .groupByKey(Grouped.as("grouping-by-thermometer"))
                 .aggregate(
                         () -> AnomalyDetector.forMeasurementsWithThreshold(lastRecentMeasurements, anomalyThreshold),
                         (key, value, aggregate) -> aggregate.process(value),
+                        Named.as("anomalies-detection"),
                         Materialized.<Long, AnomalyDetector, KeyValueStore<Bytes, byte[]>>as(ANOMALY_DETECTOR_STATE_STORE)
                                 .withKeySerde(Serdes.Long())
                                 .withValueSerde(SerdesFactories.JSONSerdes(AnomalyDetector.class))
-                                .withRetention(Duration.ofMinutes(5))
+                                .withCachingDisabled()
                 )
-                .filter((key, value) -> value.anomalyDetected())
-                .mapValues((unused, value) -> value.getAnomaly().toTemperatureMeasurement())
-                .toStream()
-                .filter((key, value) -> value != null)
-                .processValues(timeMeasurementAnomalyDetectedSupplier());
+                .toStream(Named.as("to-anomaly-detector-stream"))
+                .filter((key, value) -> value.anomalyDetected(), Named.as("filtering-detected"))
+                .mapValues(value -> value.getAnomaly().toTemperatureMeasurement(), Named.as("convert-back-to-measurement"))
+                .processValues(timeMeasurementAnomalyDetectedSupplier(), Named.as("increment-detected-anomalies"));
     }
 
     private FixedKeyProcessorSupplier<Long, TemperatureMeasurement, TemperatureMeasurement> timeMeasurementConsumingSupplier() {
