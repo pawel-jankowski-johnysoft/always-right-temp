@@ -13,10 +13,12 @@ spring:
               consumer:
                 key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
                 value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
+                consumed-as: "temperature-measurements-source"
             detected-anomalies:
               producer:
                 key-serde: "org.apache.kafka.common.serialization.Serdes$LongSerde"
                 value-serde: "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde"
+                produced-as: "detected-anomalies-sink"
           binder:
             configuration:
               schema.registry.url: http://localhost:8081
@@ -41,6 +43,23 @@ management:
   endpoints:
     web:
       exposure:
-        include: prometheus
+        include:
+          - prometheus
+          - kafkastreamstopology
+          - health
+
+  health:
+    binders:
+      enabled: true
+  endpoint:
+    health:
+    # https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.health.auto-configured-health-indicators
+      group:
+        liveness:
+          include:
+            - binders
+        readiness:
+          include:
+            - binders
 server:
   port: 0

@@ -24,6 +24,20 @@ spec:
               protocol: TCP
 #            - containerPort: 5005
 #              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
           env:
             - name: SPRING_APPLICATION_NAME
               value: temperature-anomaly-analyzer
@@ -59,7 +73,7 @@ metadata:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/actuator/prometheus"
-    prometheus.io/port: "80"
+    prometheus.io/port: "8081"
 spec:
   selector:
     app: temperature-anomaly-analyzer
